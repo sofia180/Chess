@@ -4,7 +4,7 @@ import type { JwtUser } from '../../types';
 
 export function signJwt(payload: JwtUser): string {
   const secret: Secret = env.JWT_SECRET as unknown as Secret;
-  const options: SignOptions = { expiresIn: env.JWT_EXPIRES_IN };
+  const options: SignOptions = { expiresIn: env.JWT_EXPIRES_IN as unknown as any };
   return jwt.sign(payload, secret, options);
 }
 
