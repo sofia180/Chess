@@ -1,0 +1,152 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Asset {
+  USDT
+  ETH
+  POLYGON
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAW
+  LOCK
+  UNLOCK
+  PAYOUT
+  FEE
+  REFERRAL_REWARD
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum GameStatus {
+  WAITING
+  ACTIVE
+  ENDED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  telegramId   String?  @unique
+  username     String?
+  isBanned     Boolean  @default(false)
+
+  referralCode String   @unique
+  referredById String?
+  referredBy   User?    @relation("UserReferrals", fields: [referredById], references: [id])
+  referrals    User[]   @relation("UserReferrals")
+
+  wallet       Wallet?
+  transactions Transaction[]
+
+  gamesAsP1    GameRoom[] @relation("GameRoomPlayer1")
+  gamesAsP2    GameRoom[] @relation("GameRoomPlayer2")
+  gamesWon     GameRoom[] @relation("GameRoomWinner")
+
+  referralRewardsAsReferrer ReferralReward[] @relation("ReferralRewardReferrer")
+  referralRewardsAsUser     ReferralReward[] @relation("ReferralRewardUser")
+
+  createdAt DateTime @default(now())
+}
+
+model Wallet {
+  id        String  @id @default(cuid())
+  userId    String  @unique
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assets    WalletAsset[]
+  createdAt DateTime @default(now())
+}
+
+model WalletAsset {
+  id            String  @id @default(cuid())
+  walletId      String
+  wallet        Wallet  @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  asset         Asset
+  balanceAvail  Decimal @db.Decimal(36, 18) @default(0)
+  balanceLocked Decimal @db.Decimal(36, 18) @default(0)
+
+  @@unique([walletId, asset])
+}
+
+model Transaction {
+  id        String            @id @default(cuid())
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      TransactionType
+  asset     Asset
+  amount    Decimal           @db.Decimal(36, 18)
+  status    TransactionStatus @default(COMPLETED)
+  meta      Json?
+  createdAt DateTime          @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model GameRoom {
+  id          String     @id @default(cuid())
+  gameType    String
+  stakeAsset  Asset
+  stakeAmount Decimal    @db.Decimal(36, 18)
+  status      GameStatus @default(WAITING)
+
+  isPrivate   Boolean @default(false)
+  inviteCode  String? @unique
+
+  player1Id String
+  player1   User @relation("GameRoomPlayer1", fields: [player1Id], references: [id])
+
+  player2Id String?
+  player2   User? @relation("GameRoomPlayer2", fields: [player2Id], references: [id])
+
+  winnerId String?
+  winner   User? @relation("GameRoomWinner", fields: [winnerId], references: [id])
+
+  gameState Json?
+  moves     GameMove[]
+
+  createdAt DateTime @default(now())
+
+  @@index([status, gameType])
+  @@index([stakeAsset, stakeAmount])
+}
+
+model GameMove {
+  id        String   @id @default(cuid())
+  gameId    String
+  game      GameRoom @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  move      Json
+  createdAt DateTime @default(now())
+
+  @@index([gameId, createdAt])
+}
+
+model ReferralReward {
+  id         String   @id @default(cuid())
+  referrerId String
+  referrer   User     @relation("ReferralRewardReferrer", fields: [referrerId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User @relation("ReferralRewardUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  gameId String?
+  amount Decimal  @db.Decimal(36, 18)
+  asset  Asset
+  createdAt DateTime @default(now())
+
+  @@index([referrerId, createdAt])
+  @@index([userId, createdAt])
+}
+

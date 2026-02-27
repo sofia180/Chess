@@ -1,0 +1,18 @@
+{
+  "name": "telegram-crypto-gaming-mvp",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @tcg/server & npm run dev -w @tcg/web",
+    "dev:web": "npm run dev -w @tcg/web",
+    "dev:server": "npm run dev -w @tcg/server",
+    "build": "npm run build -w @tcg/games && npm run build -w @tcg/server && npm run build -w @tcg/web",
+    "lint": "npm run lint -w @tcg/web",
+    "prisma:generate": "npm run prisma:generate -w @tcg/server",
+    "prisma:migrate": "npm run prisma:migrate -w @tcg/server"
+  }
+}
+
