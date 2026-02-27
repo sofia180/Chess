@@ -152,7 +152,7 @@ export function createSocketServer(httpServer: HttpServer) {
         const by = room.player1Id === userId ? 'p1' : 'p2';
         io.to(roomId).emit('move', { roomId, by, move, state: result.state });
 
-        if ('end' in result && result.end) {
+        if ('end' in result && result.end && result.settlement) {
           io.to(roomId).emit('game_end', {
             roomId,
             winnerUserId: result.end.winnerId ?? undefined,
@@ -177,6 +177,10 @@ export function createSocketServer(httpServer: HttpServer) {
     socket.on('resign', async ({ roomId }, cb) => {
       try {
         const result = await games.resign({ roomId, userId });
+        if (!result.settlement) {
+          cb({ ok: true });
+          return;
+        }
         io.to(roomId).emit('game_end', {
           roomId,
           winnerUserId: result.end.winnerId,

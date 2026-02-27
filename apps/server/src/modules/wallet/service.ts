@@ -12,7 +12,7 @@ export function assertPositive(amount: Prisma.Decimal) {
   if (amount.lte(0)) throw new Error('Amount must be positive');
 }
 
-async function getWalletAssetOrThrow(tx: typeof prisma, userId: string, asset: Asset) {
+async function getWalletAssetOrThrow(tx: Prisma.TransactionClient, userId: string, asset: Asset) {
   const wallet = await tx.wallet.findUnique({ where: { userId } });
   if (!wallet) throw new Error('Wallet missing');
   const wa = await tx.walletAsset.findUnique({
@@ -35,7 +35,7 @@ export async function getBalances(userId: string) {
   }));
 }
 
-export async function deposit(userId: string, asset: Asset, amountStr: string, meta?: Record<string, unknown>) {
+export async function deposit(userId: string, asset: Asset, amountStr: string, meta?: Prisma.InputJsonValue) {
   const amount = d(amountStr);
   assertPositive(amount);
   return prisma.$transaction(async (tx) => {
@@ -50,7 +50,7 @@ export async function deposit(userId: string, asset: Asset, amountStr: string, m
   });
 }
 
-export async function withdraw(userId: string, asset: Asset, amountStr: string, meta?: Record<string, unknown>) {
+export async function withdraw(userId: string, asset: Asset, amountStr: string, meta?: Prisma.InputJsonValue) {
   const amount = d(amountStr);
   assertPositive(amount);
   return prisma.$transaction(async (tx) => {
