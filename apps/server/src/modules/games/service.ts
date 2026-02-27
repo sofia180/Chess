@@ -1,4 +1,4 @@
-import type { Asset, GameRoom } from '@prisma/client';
+import { Prisma, type Asset, type GameRoom } from '@prisma/client';
 import { prisma } from '../../db';
 import { GAME_ENGINES } from './registry';
 import type { GameType } from '../../types';
@@ -30,7 +30,7 @@ export async function startGame(roomId: string) {
 
   const updated = await prisma.gameRoom.update({
     where: { id: room.id },
-    data: { gameState: state }
+    data: { gameState: state as unknown as Prisma.InputJsonValue }
   });
 
   // Lock both players stake
@@ -71,7 +71,7 @@ export async function applyMove(params: { roomId: string; userId: string; move: 
       data: {
         status: 'ENDED',
         winnerId,
-        gameState: result.state
+        gameState: result.state as unknown as Prisma.InputJsonValue
       }
     });
 
@@ -89,7 +89,7 @@ export async function applyMove(params: { roomId: string; userId: string; move: 
 
   const updated = await prisma.gameRoom.update({
     where: { id: room.id },
-    data: { gameState: result.state }
+    data: { gameState: result.state as unknown as Prisma.InputJsonValue }
   });
   return { room: updated, state: result.state };
 }
