@@ -54,6 +54,8 @@ model User {
   gamesAsP2    GameRoom[] @relation("GameRoomPlayer2")
   gamesWon     GameRoom[] @relation("GameRoomWinner")
 
+  gameMoves    GameMove[]
+
   referralRewardsAsReferrer ReferralReward[] @relation("ReferralRewardReferrer")
   referralRewardsAsUser     ReferralReward[] @relation("ReferralRewardUser")
 
